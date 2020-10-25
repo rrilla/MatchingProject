@@ -20,10 +20,10 @@ import com.project.MatchingPro.domain.user.UserRepository;
 
 public class JwtAuthorizationFilter implements Filter {
 
-	private UserRepository personRepository;
+	private UserRepository userRepository;
 
-	public JwtAuthorizationFilter(UserRepository personRepository) {
-		this.personRepository = personRepository;
+	public JwtAuthorizationFilter(UserRepository userRepository) {
+		this.userRepository = userRepository;
 	}
 
 	@Override
@@ -33,12 +33,12 @@ public class JwtAuthorizationFilter implements Filter {
 
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponse resp = (HttpServletResponse) response;
+		PrintWriter out = resp.getWriter();
 		resp.setContentType("text/html; charset=UTF-8"); 
 		
 		String jwtToken = req.getHeader(JwtProps.header);
 
 		if (jwtToken == null) {
-			PrintWriter out = resp.getWriter();
 			out.print("jwtToken not found");
 			out.flush();
 		} else {
@@ -47,11 +47,10 @@ public class JwtAuthorizationFilter implements Filter {
 			try {
 				int personId = JWT.require(Algorithm.HMAC512(JwtProps.secret)).build().verify(jwtToken).getClaim("id").asInt();
 				HttpSession session = req.getSession();
-				User personEntity = personRepository.findById(personId).get();
+				User personEntity = userRepository.findById(personId).get();
 				session.setAttribute("principal", personEntity);
 				chain.doFilter(request, response);
 			} catch (Exception e) {
-				PrintWriter out = resp.getWriter();
 				out.print("verify fail");
 				out.flush();
 			}

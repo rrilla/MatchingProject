@@ -21,10 +21,10 @@ import com.project.MatchingPro.domain.user.UserRepository;
 
 public class JwtAuthenticationFilter implements Filter{
 
-	private UserRepository personRepository;
+	private UserRepository userRepository;
 	
-	public JwtAuthenticationFilter(UserRepository personRepository) {
-		this.personRepository = personRepository;
+	public JwtAuthenticationFilter(UserRepository userRepository) {
+		this.userRepository = userRepository;
 	}
 	
 	@Override
@@ -47,25 +47,30 @@ public class JwtAuthenticationFilter implements Filter{
 			try {
 				User person = om.readValue(req.getInputStream(), User.class);
 
-				User personEntity = 
-				personRepository.findByUsernameAndPassword(person.getUsername(), person.getPassword());
-
-				if(personEntity == null) {
-					out.print("fail");
+				if(userRepository.countByLoginid(person.getLoginid())==0) {
+					out.print("아이디x");
 					out.flush();
 				}else {
-					System.out.println("인증되었습니다.");
-					
-					String jwtToken = 
-							JWT.create()
-							.withSubject("토큰제목")
-							.withExpiresAt(new Date(System.currentTimeMillis()+1000*60*60))
-							.withClaim("id", personEntity.getId())
-							.sign(Algorithm.HMAC512(JwtProps.secret));
-					
-					resp.addHeader(JwtProps.header, JwtProps.auth+jwtToken);
-					out.print("ok");
-					out.flush();
+					User personEntity = 
+							userRepository.findByLoginidAndPassword(person.getLoginid(), person.getPassword());
+	
+					if(personEntity == null) {
+						out.print("비번x");
+						out.flush();
+					}else {
+						System.out.println(personEntity.getNickname()+"님이 로그인 하심.");
+						
+						String jwtToken = 
+								JWT.create()
+								.withSubject("토큰제목")
+								.withExpiresAt(new Date(System.currentTimeMillis()+1000*60*60))
+								.withClaim("id", personEntity.getId())
+								.sign(Algorithm.HMAC512(JwtProps.secret));
+						
+						resp.addHeader(JwtProps.header, JwtProps.auth+jwtToken);
+						out.print("ok");
+						out.flush();
+					}
 				}
 			} catch (Exception e) {
 				System.out.println("오류 : "+e.getMessage());

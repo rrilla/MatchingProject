@@ -32,7 +32,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 User user = new User();
-                user.setUsername(etLoginId.getText().toString());
+                user.setLoginid(etLoginId.getText().toString());
                 user.setPassword(etPassword.getText().toString());
                 RestAPITask task = new RestAPITask("login");
                 task.execute(gson.toJson(user));
